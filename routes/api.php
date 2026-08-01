@@ -1,10 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/status', function() {
-    return response()->json([
-        "status" => "ok"
-    ]);
-});
+Route::prefix('v1')->group(base_path('routes/api/v1.php'));
