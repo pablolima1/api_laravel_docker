@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');
-            $table->string('cpf', 11)->unique();
+            $table->string('document', 14)->unique();
             $table->string('email')->unique();
             $table->string('password');
             $table->foreignId('customer_type_id')
