@@ -34,5 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'authorizer' => [
+        'url' => env('AUTHORIZER_URL', 'https://util.devi.tools/api/v2/authorize'),
+        'timeout' => env('AUTHORIZER_TIMEOUT', 5),
+    ],
 
 ];
