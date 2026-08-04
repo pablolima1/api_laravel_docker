@@ -5,6 +5,9 @@ namespace App\Actions;
 use App\Dto\TransferData;
 use App\Enums\TransactionStatusEnum;
 use App\Enums\TransferLogEventEnum;
+use App\Exceptions\Domain\InsufficientBalanceException;
+use App\Exceptions\Domain\PayerNotAllowedException;
+use App\Exceptions\Domain\TransactionNotAuthorizedException;
 use App\Helpers\LogTransactionContext;
 use App\Jobs\SendTransferNotificationJob;
 use App\Models\Transaction;
@@ -33,17 +36,22 @@ final class TransferMoneyAction
 
         if (!$payer->canSendMoney()) {
             $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::MerchantCannotSend);
-            throw new \Exception('Payer is not allowed to send money');
+            throw new PayerNotAllowedException();
         }
 
-        if ($this->walletRepository->balanceOf($payer->id) < $dto->value) {
+        $currentBalance = $this->walletRepository->balanceOf($payer->id);
+
+        if ($currentBalance < $dto->value) {
             $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::InsufficientBalance);
-            throw new \Exception('Insufficient balance');
+            throw new InsufficientBalanceException(
+                currentBalance: $currentBalance,
+                requestedAmount: $dto->value,
+            );
         }
 
         if (! $this->authorizationService->authorize()) {
             $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::NotAuthorized);
-            throw new \Exception('Transaction not authorized');
+            throw new TransactionNotAuthorizedException();
         }
 
         $transaction = DB::transaction(function () use ($payer, $payee, $dto) {
