@@ -4,14 +4,14 @@ namespace App\Actions;
 
 use App\Dto\TransferData;
 use App\Enums\TransactionStatusEnum;
-use App\Enums\TransferLogEvent;
+use App\Enums\TransferLogEventEnum;
+use App\Helpers\LogTransactionContext;
 use App\Jobs\SendTransferNotificationJob;
 use App\Models\Transaction;
 use App\Repositories\CustomerRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\WalletRepository;
 use App\Services\Authorization\ExternalAuthorizationService;
-use App\Support\Logging\TransferLogContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -24,25 +24,25 @@ final class TransferMoneyAction
         private readonly ExternalAuthorizationService $authorizationService,
     ) {}
 
-    public function execute(TransferData $dto)
+    public function execute(TransferData $dto): Transaction
     {
-        Log::channel('transfers')->info(TransferLogEvent::Started->value, TransferLogContext::fromData($dto));
+        Log::channel('transfers')->info(TransferLogEventEnum::Started->value, LogTransactionContext::fromData($dto));
 
         $payer = $this->customerRepository->findOrFail($dto->payer);
         $payee = $this->customerRepository->findOrFail($dto->payee);
 
         if (!$payer->canSendMoney()) {
-            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEvent::MerchantCannotSend);
+            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::MerchantCannotSend);
             throw new \Exception('Payer is not allowed to send money');
         }
 
         if ($this->walletRepository->balanceOf($payer->id) < $dto->value) {
-            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEvent::InsufficientBalance);
+            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::InsufficientBalance);
             throw new \Exception('Insufficient balance');
         }
 
         if (! $this->authorizationService->authorize()) {
-            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEvent::NotAuthorized);
+            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::NotAuthorized);
             throw new \Exception('Transaction not authorized');
         }
 
@@ -58,14 +58,14 @@ final class TransferMoneyAction
             );
         });
 
-        Log::channel('transfers')->info(TransferLogEvent::Completed->value, TransferLogContext::fromTransaction($transaction));
+        Log::channel('transfers')->info(TransferLogEventEnum::Completed->value, LogTransactionContext::fromTransaction($transaction));
 
         SendTransferNotificationJob::dispatch($transaction);
 
         return $transaction;
     }
 
-    private function recordFailure(int $payerId, int $payeeId, float $amount, TransferLogEvent $event): void
+    private function recordFailure(int $payerId, int $payeeId, float $amount, TransferLogEventEnum $event): void
     {
         Log::channel('transfers')->warning($event->value, ['payer_id' => $payerId, 'payee_id' => $payeeId, 'amount' => $amount]);
 

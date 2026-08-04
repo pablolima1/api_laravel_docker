@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\NotificationLogEventEnum;
 use App\Models\Notification;
 use App\Models\Transaction;
 use App\Services\Notification\ExternalNotificationService;
@@ -64,7 +65,7 @@ class SendTransferNotificationJob implements ShouldQueue
                 'response_payload' => ['error' => $exception->getMessage()],
             ]);
 
-            Log::channel('transfers')->warning('Falha ao enviar notificação de transferência.', [
+            Log::channel('transfers')->warning(NotificationLogEventEnum::SendFailed->value, [
                 'transaction_id' => $this->transaction->id,
                 'attempt' => $notification->attempts,
                 'message' => $exception->getMessage(),
@@ -81,7 +82,7 @@ class SendTransferNotificationJob implements ShouldQueue
             ->where('customer_id', $this->transaction->payee_id)
             ->update(['status' => 'failed']);
 
-        Log::channel('transfers')->error('Notificação de transferência esgotou todas as tentativas.', [
+        Log::channel('transfers')->error(NotificationLogEventEnum::RetriesExhausted->value, [
             'transaction_id' => $this->transaction->id,
             'message' => $exception->getMessage(),
         ]);

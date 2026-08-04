@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Support\Logging;
+namespace App\Helpers;
 
 use App\Dto\TransferData;
 use App\Models\Transaction;
 
-final class TransferLogContext
+final class LogTransactionContext
 {
     public static function fromData(TransferData $data): array
     {

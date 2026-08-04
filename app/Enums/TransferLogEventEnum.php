@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum TransferLogEvent: string
+enum TransferLogEventEnum: string
 {
     case Started = 'transfer.started';
     case MerchantCannotSend = 'transfer.failed.merchant_cannot_send';
