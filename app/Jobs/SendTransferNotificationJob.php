@@ -64,7 +64,7 @@ class SendTransferNotificationJob implements ShouldQueue
                 'response_payload' => ['error' => $exception->getMessage()],
             ]);
 
-            Log::warning('Falha ao enviar notificação de transferência.', [
+            Log::channel('transfers')->warning('Falha ao enviar notificação de transferência.', [
                 'transaction_id' => $this->transaction->id,
                 'attempt' => $notification->attempts,
                 'message' => $exception->getMessage(),
@@ -81,7 +81,7 @@ class SendTransferNotificationJob implements ShouldQueue
             ->where('customer_id', $this->transaction->payee_id)
             ->update(['status' => 'failed']);
 
-        Log::error('Notificação de transferência esgotou todas as tentativas.', [
+        Log::channel('transfers')->error('Notificação de transferência esgotou todas as tentativas.', [
             'transaction_id' => $this->transaction->id,
             'message' => $exception->getMessage(),
         ]);

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Transaction\TransferRequest;
 use App\Http\Resources\Api\V1\TransactionResource;
 use App\Http\Traits\ApiResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TransactionController extends Controller
 {
@@ -17,7 +18,7 @@ class TransactionController extends Controller
         private readonly TransferMoneyAction $transferMoneyAction,
     ) {}
     
-    public function transfer(TransferRequest $request)
+    public function transfer(TransferRequest $request): JsonResponse
     {
         $dto = TransferData::fromArray($request->validated());
         
