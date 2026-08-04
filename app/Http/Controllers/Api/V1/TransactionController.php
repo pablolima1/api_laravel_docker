@@ -7,9 +7,12 @@ use App\Dto\TransferData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Transaction\TransferRequest;
 use App\Http\Resources\Api\V1\TransactionResource;
+use App\Http\Traits\ApiResponse;
 
 class TransactionController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         private readonly TransferMoneyAction $transferMoneyAction,
     ) {}
@@ -20,6 +23,9 @@ class TransactionController extends Controller
         
         $transaction = $this->transferMoneyAction->execute($dto);
 
-        return response()->json(new TransactionResource($transaction), 201);
+        return $this->success(
+            new TransactionResource($transaction),
+            'Transferência realizada com sucesso.',
+        );
     }
 }

@@ -1,14 +1,17 @@
 <?php
 
-namespace App\Traits;
+namespace App\Http\Traits;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 trait ApiResponse
 {
-    protected function success($data = null, string $message = 'Operation completed successfully.', int $code = Response::HTTP_OK): JsonResponse
-    {
+    protected function success(
+        mixed $data = null,
+        string $message = 'Operação realizada com sucesso.',
+        int $code = Response::HTTP_OK,
+    ): JsonResponse {
         return response()->json([
             'success' => true,
             'message' => $message,
@@ -16,8 +19,11 @@ trait ApiResponse
         ], $code);
     }
 
-    protected function error(string $message = 'An error occurred.', int $code = Response::HTTP_BAD_REQUEST, $errors = null): JsonResponse
-    {
+    protected function error(
+        string $message = 'Ocorreu um erro.',
+        int $code = Response::HTTP_BAD_REQUEST,
+        ?array $errors = null,
+    ): JsonResponse {
         $response = [
             'success' => false,
             'message' => $message,
