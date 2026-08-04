@@ -8,6 +8,9 @@ use Throwable;
 
 final class ExternalAuthorizationService
 {
+    /**
+     * Consulta autorização externa e retorna se foi concedida.
+     */
     public function authorize(): bool
     {
         try {

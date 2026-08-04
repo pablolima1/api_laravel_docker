@@ -7,6 +7,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 trait ApiResponse
 {
+    /**
+     * Formata uma resposta JSON de API bem-sucedida.
+     */
     protected function success(
         mixed $data = null,
         string $message = 'Operação realizada com sucesso.',
@@ -19,6 +22,10 @@ trait ApiResponse
         ], $code);
     }
 
+
+    /**
+     * Formata uma resposta JSON de API de erro com detalhes opcionais.
+     */
     protected function error(
         string $message = 'Ocorreu um erro.',
         int $code = Response::HTTP_BAD_REQUEST,

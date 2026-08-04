@@ -9,16 +9,31 @@ use App\Models\Wallet;
 
 final class WalletRepository
 {
+    /**
+     * Retorna o saldo da carteira para o cliente informado.
+     *
+     * @throws WalletNotFoundException
+     */
     public function balanceOf(int $customerId): float
     {
         return (float) $this->findWalletOrFail($customerId)->balance;
     }
 
+    /**
+     * Reduz o saldo da carteira para o cliente informado.
+     *
+     * @throws WalletNotFoundException
+     */
     public function debit(int $customerId, float $amount): void
     {
         $this->findWalletOrFail($customerId)->decrement('balance', $amount);
     }
 
+    /**
+     * Aumenta o saldo da carteira para o cliente informado.
+     *
+     * @throws WalletNotFoundException
+     */
     public function credit(int $customerId, float $amount): void
     {
         $this->findWalletOrFail($customerId)->increment('balance', $amount);

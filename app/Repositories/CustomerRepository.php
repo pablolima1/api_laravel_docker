@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 final class CustomerRepository
 {
+    /**
+     * Retrieves a customer or fails with a domain exception when not found.
+     *
+     * @throws UserNotFoundException
+     */
     public function findOrFail(int $id): Customer
     {
         try {

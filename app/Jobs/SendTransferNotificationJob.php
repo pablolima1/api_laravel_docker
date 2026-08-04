@@ -75,6 +75,9 @@ class SendTransferNotificationJob implements ShouldQueue
         }
     }
 
+    /**
+     * Marca a notificação como falhada quando o job exaure as tentativas.
+     */
     public function failed(Throwable $exception): void
     {
         Notification::query()
