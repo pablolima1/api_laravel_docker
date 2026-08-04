@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Dto\TransferData;
 use App\Enums\TransactionStatusEnum;
+use App\Jobs\SendTransferNotificationJob;
 use App\Models\Transaction;
 use App\Repositories\CustomerRepository;
 use App\Repositories\TransactionRepository;
@@ -20,35 +21,50 @@ final class TransferMoneyAction
         private readonly ExternalAuthorizationService $authorizationService,
     ) {}
 
-    public function execute(TransferData $data)
+    public function execute(TransferData $dto)
     {
-        $payer = $this->customerRepository->findOrFail($data->payer);
-        $payee = $this->customerRepository->findOrFail($data->payee);
-        
+        $payer = $this->customerRepository->findOrFail($dto->payer);
+        $payee = $this->customerRepository->findOrFail($dto->payee);
+
         if (!$payer->canSendMoney()) {
-            Throw new \Exception('Payer is not allowed to send money');
+            $this->recordFailure($payer->id, $payee->id, $dto->value);
+            throw new \Exception('Payer is not allowed to send money');
         }
 
-        if ($this->walletRepository->balanceOf($payer->id) < $data->value) {
-            Throw new \Exception('Insufficient balance');
+        if ($this->walletRepository->balanceOf($payer->id) < $dto->value) {
+            $this->recordFailure($payer->id, $payee->id, $dto->value);
+            throw new \Exception('Insufficient balance');
         }
 
         if (! $this->authorizationService->authorize()) {
-            Throw new \Exception('Transaction not authorized');
+            $this->recordFailure($payer->id, $payee->id, $dto->value);
+            throw new \Exception('Transaction not authorized');
         }
 
-        $transaction = DB::transaction(function () use ($payer, $payee, $data) {
-            $this->walletRepository->debit($payer->id, $data->value);
-            $this->walletRepository->credit($payee->id, $data->value);
+        $transaction = DB::transaction(function () use ($payer, $payee, $dto) {
+            $this->walletRepository->debit($payer->id, $dto->value);
+            $this->walletRepository->credit($payee->id, $dto->value);
 
             return $this->transactionRepository->create(
                 payerId: $payer->id,
                 payeeId: $payee->id,
-                amount: $data->value,
+                amount: $dto->value,
                 status: TransactionStatusEnum::Completed,
             );
         });
-        
+
+        SendTransferNotificationJob::dispatch($transaction);
+
         return $transaction;
+    }
+
+    private function recordFailure(int $payerId, int $payeeId, float $amount): void
+    {
+        $this->transactionRepository->create(
+            payerId: $payerId,
+            payeeId: $payeeId,
+            amount: $amount,
+            status: TransactionStatusEnum::Failed,
+        );
     }
 }

@@ -6,6 +6,7 @@ use App\Actions\TransferMoneyAction;
 use App\Dto\TransferData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Transaction\TransferRequest;
+use App\Http\Resources\Api\V1\TransactionResource;
 
 class TransactionController extends Controller
 {
@@ -17,11 +18,8 @@ class TransactionController extends Controller
     {
         $dto = TransferData::fromArray($request->validated());
         
-        $this->transferMoneyAction->execute($dto);
+        $transaction = $this->transferMoneyAction->execute($dto);
 
-        return response()->json([
-            'message' => 'Transfer successful',
-            'data' => $dto
-        ]);
+        return response()->json(new TransactionResource($transaction), 201);
     }
 }
