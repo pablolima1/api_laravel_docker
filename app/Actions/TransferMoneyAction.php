@@ -61,17 +61,34 @@ final readonly class TransferMoneyAction
             throw new TransactionNotAuthorizedException();
         }
 
-        $transaction = DB::transaction(function () use ($payer, $payee, $dto) {
-            $this->walletRepository->debit($payer->id, $dto->value);
-            $this->walletRepository->credit($payee->id, $dto->value);
+        try {
+            $transaction = DB::transaction(function () use ($payer, $payee, $dto) {
+                $wallets = $this->walletRepository->lockManyForUpdate([$payer->id, $payee->id]);
 
-            return $this->transactionRepository->create(
-                payerId: $payer->id,
-                payeeId: $payee->id,
-                amount: $dto->value,
-                status: TransactionStatusEnum::Completed,
-            );
-        });
+                $payerWallet = $wallets->get($payer->id);
+                $payeeWallet = $wallets->get($payee->id);
+
+                if (bccomp((string) $payerWallet->balance, (string) $dto->value, 2) < 0) {
+                    throw new InsufficientBalanceException(
+                        currentBalance: (float) $payerWallet->balance,
+                        requestedAmount: $dto->value,
+                    );
+                }
+
+                $this->walletRepository->debit($payerWallet, $dto->value);
+                $this->walletRepository->credit($payeeWallet, $dto->value);
+
+                return $this->transactionRepository->create(
+                    payerId: $payer->id,
+                    payeeId: $payee->id,
+                    amount: $dto->value,
+                    status: TransactionStatusEnum::Completed,
+                );
+            });
+        } catch (InsufficientBalanceException $exception) {
+            $this->recordFailure($payer->id, $payee->id, $dto->value, TransferLogEventEnum::InsufficientBalance);
+            throw $exception;
+        }
 
         Log::channel('transfers')->info(TransferLogEventEnum::Completed->value, LogTransactionContext::fromTransaction($transaction));
 

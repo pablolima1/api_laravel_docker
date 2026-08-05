@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Exceptions\Domain\WalletNotFoundException;
 use App\Models\Wallet;
+use Illuminate\Support\Collection;
 
 final class WalletRepository
 {
@@ -20,23 +21,19 @@ final class WalletRepository
     }
 
     /**
-     * Reduz o saldo da carteira para o cliente informado.
-     *
-     * @throws WalletNotFoundException
+     * Reduz o saldo da carteira informada.
      */
-    public function debit(int $customerId, float $amount): void
+    public function debit(Wallet $wallet, float $amount): void
     {
-        $this->findWalletOrFail($customerId)->decrement('balance', $amount);
+        $wallet->decrement('balance', $amount);
     }
 
     /**
-     * Aumenta o saldo da carteira para o cliente informado.
-     *
-     * @throws WalletNotFoundException
+     * Aumenta o saldo da carteira informada.
      */
-    public function credit(int $customerId, float $amount): void
+    public function credit(Wallet $wallet, float $amount): void
     {
-        $this->findWalletOrFail($customerId)->increment('balance', $amount);
+        $wallet->increment('balance', $amount);
     }
 
     private function findWalletOrFail(int $customerId): Wallet
@@ -50,5 +47,25 @@ final class WalletRepository
         }
 
         return $wallet;
+    }
+
+    /**
+     * Busca e trava (SELECT ... FOR UPDATE) as wallets dos clientes informados.
+     * Deve ser chamado dentro de uma DB::transaction() já aberta — fora dela,
+     * o lock é liberado imediatamente após a query, sem efeito real.
+     *
+     * @param  int[]  $customerIds
+     * @return Collection<int, Wallet> indexada por customer_id
+     */
+    public function lockManyForUpdate(array $customerIds): Collection
+    {
+        $sortedIds = collect($customerIds)->unique()->sort()->values()->all();
+
+        return Wallet::query()
+            ->whereIn('customer_id', $sortedIds)
+            ->orderBy('customer_id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('customer_id');
     }
 }

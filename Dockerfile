@@ -31,7 +31,8 @@ RUN docker-php-ext-install \
     fileinfo \
     xml \
     dom \
-    curl
+    curl \
+    bcmath
 
 RUN pecl install redis \
     && docker-php-ext-enable redis
