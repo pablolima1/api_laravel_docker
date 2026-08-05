@@ -17,7 +17,7 @@ class TransactionController extends Controller
     public function __construct(
         private readonly TransferMoneyAction $transferMoneyAction,
     ) {}
-    
+
     public function transfer(TransferRequest $request): JsonResponse
     {
         $dto = TransferData::fromArray($request->validated());

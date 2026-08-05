@@ -1,0 +1,160 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Laravel Docker",
+        "description": "API REST de transferências entre clientes, sem autenticação.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/transfer": {
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Realiza uma transferência entre clientes",
+                "description": "Realiza a transferência de `value` de um cliente `payer` para `payee`.",
+                "operationId": "2963a84756fa334d2c55d0472d503193",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TransferRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transferência realizada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transferência realizada com sucesso."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "TransactionResource": {
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "example": "uuid"
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100.5
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Completed"
+                    },
+                    "payer": {
+                        "properties": {
+                            "uuid": {
+                                "type": "string",
+                                "example": "payer-uuid"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Payer Name"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "payee": {
+                        "properties": {
+                            "uuid": {
+                                "type": "string",
+                                "example": "payee-uuid"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Payee Name"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-04T12:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "TransferRequest": {
+                "required": [
+                    "value",
+                    "payer",
+                    "payee"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100.5
+                    },
+                    "payer": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "payee": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Transactions",
+            "description": "Transactions"
+        }
+    ]
+}
