@@ -1,58 +1,155 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Sobre este projeto
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A estrutura de pastas e o desacoplamento em
+camadas (Actions, Services, Repositories, DTOs, Enums, Exceptions de domínio,
+versionamento de rotas) são as práticas que já utilizo (ou já utilizei) ao longo da minha
+carreira como desenvolvedor PHP/Laravel. Documento as decisões pontuais
+abaixo para deixar claro o raciocínio por trás de cada uma.
 
-## About Laravel
+## Arquitetura, em uma frase por camada
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Camada                        | Responsabilidade                                                            |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| `Http/Controllers`            | Orquestra a requisição HTTP, sem lógica de negócio                          |
+| `Http/Requests` (FormRequest) | Validação de forma/existência do input, antes de chegar no Controller       |
+| `Http/Resources`              | Formata a saída JSON de forma consistente, sem expor colunas cruas do banco |
+| `Http/Traits` (ApiResponse)   | Padroniza o envelope de resposta (`success`/`message`/`data` ou `errors`)   |
+| `Actions`                     | Caso de uso — a regra de negócio em si, testável sem HTTP                   |
+| `Repositories`                | Acesso a dado, isolado do domínio                                           |
+| `Services`                    | Integrações externas (autorizador, notificador)                             |
+| `Dto`                         | Objetos imutáveis transportando dado entre camadas                          |
+| `Enums`                       | Estados fechados de domínio (tipo de cliente, status de transação)          |
+| `Exceptions/Domain`           | Exceptions autorrenderizáveis (cada uma sabe seu HTTP status)               |
+| `Docs/OpenApi`                | Documentação Swagger separada do Controller, nunca instanciada em runtime   |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Docker e Docker Compose — nenhuma outra dependência local é necessária,
+  todo o ambiente (PHP 8.4, MySQL, Redis, worker de fila) roda em container.
 
-## Learning Laravel
+## Como rodar
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Copie o arquivo de variáveis de ambiente e preencha:
+   ```bash
+   cp .env.example .env
+   ```
+   Variáveis obrigatórias no `.env`: `DB_DATABASE`, `DB_PASSWORD`,
+   `REDIS_PASSWORD` (defina qualquer valor local para os três).
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. Suba o ambiente:
+   ```bash
+   docker compose up -d --build
+   ```
+   O container `app` já tenta instalar dependências e rodar as migrations
+   automaticamente na subida — mas, dependendo da ordem de inicialização
+   dos serviços, o MySQL pode ainda não estar pronto nesse momento. Se as
+   tabelas não existirem após o `up`, rode manualmente:
+   ```bash
+   docker compose exec app php artisan migrate
+   ```
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+3. Acesse a API em:
+   ```
+   http://localhost:6789
+   ```
 
-## Agentic Development
+## Banco de dados
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Rodando os seeders
 
+As tabelas de apoio (`customer_types`, `transaction_statuses`) e uma massa
+de clientes de teste com carteira precisam ser populadas manualmente:
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose exec app php artisan db:seed
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Credenciais (ambiente local/dev)
 
-## Contributing
+Como o `.env` não é versionado, seguem os valores usados neste ambiente
+local, definidos por você mesmo no passo 1:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Variável              | Valor                                           |
+| --------------------- | ----------------------------------------------- |
+| Host (fora do Docker) | `localhost`                                     |
+| Porta                 | `33007`                                         |
+| Usuário               | `root`                                          |
+| Senha                 | o valor definido em `DB_PASSWORD` no seu `.env` |
+| Database              | o valor definido em `DB_DATABASE` no seu `.env` |
 
-## Code of Conduct
+## Documentação da API (Swagger / OpenAPI)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Gere a especificação a partir dos attributes definidos em `app/Docs/OpenApi`:
+```bash
+docker compose exec app php artisan l5-swagger:generate
+```
 
-## Security Vulnerabilities
+Acesse a interface interativa em:
+```
+http://localhost:6789/api/documentation
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Testes
 
-## License
+O projeto usa **Pest**, com um banco MySQL isolado (`mysql_testing`) só para
+a suíte de testes — não compartilha dados com o banco de desenvolvimento.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Credenciais do banco de teste (já configuradas em `.env.testing`, versionado
+por não conter segredo real):
+
+| Variável                    | Valor                                       |
+| --------------------------- | ------------------------------------------- |
+| Host (interno, rede Docker) | `mysql_testing`                             |
+| Porta                       | `3306` (interna) / `3324` (exposta ao host) |
+| Usuário                     | `root`                                      |
+| Senha                       | `root`                                      |
+| Database                    | `testing`                                   |
+
+Rodando a suíte completa:
+```bash
+docker compose exec app php artisan test
+```
+
+Rodando só um grupo específico:
+```bash
+docker compose exec app php artisan test --filter=TransactionControllerTest
+docker compose exec app php artisan test --filter=TransferMoneyActionTest
+```
+
+## Endpoint principal
+
+```
+POST /api/v1/transfer
+Content-Type: application/json
+
+{
+  "value": 100.0,
+  "payer": 1,
+  "payee": 2
+}
+```
+
+## Filas e notificação assíncrona
+
+O container `queue` processa jobs continuamente (fila `default`, Redis como
+driver). A notificação ao recebedor de uma transferência é enviada de forma
+assíncrona, com retry e backoff progressivo em caso de falha do serviço
+externo. Acompanhar o processamento:
+```bash
+docker compose logs -f queue
+```
+
+## Decisões de arquitetura que valem destaque
+
+- **Repositories sem interface**: optei por classes concretas em vez de
+  contratos, dado o escopo fechado do desafio — o Laravel resolve por
+  autowiring sem necessidade de `bind` manual em `ServiceProvider`.
+- **Actions em vez de Services genéricos**: uma classe por caso de uso,
+  evitando que um `Service` vire um repositório de métodos não relacionados
+  ao longo do tempo.
+- **Lock pessimista sem ordenação de IDs**: `lockForUpdate` protege contra
+  race condition; o risco (raro) de deadlock em transferências opostas
+  simultâneas é resolvido pelo retry nativo do `DB::transaction()`.
+- **Falha de negócio não é descartada**: mesmo quando uma transferência é
+  barrada (saldo insuficiente, lojista tentando enviar, autorizador
+  negando), um registro com status `Failed` é persistido fora do escopo da
+  transação principal, preservando rastreabilidade.
