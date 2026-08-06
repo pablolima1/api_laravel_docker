@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CustomerType extends Model
 {
+    protected $fillable = ['name', 'description'];
+
     public function customers(): HasMany
     {
         return $this->hasMany(Customer::class);

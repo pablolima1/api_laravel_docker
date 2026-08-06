@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TransactionStatus extends Model
 {
+    protected $fillable = ['name', 'description'];
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

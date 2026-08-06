@@ -19,7 +19,7 @@ final class TransactionNotAuthorizedException extends BusinessException
 
     public function status(): int
     {
-        return Response::HTTP_FORBIDDEN;
+        return Response::HTTP_UNPROCESSABLE_ENTITY;
     }
 
     public function errorCode(): string
