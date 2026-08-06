@@ -8,7 +8,7 @@ use App\Exceptions\Domain\WalletNotFoundException;
 use App\Models\Wallet;
 use Illuminate\Support\Collection;
 
-final class WalletRepository
+class WalletRepository
 {
     /**
      * Retorna o saldo da carteira para o cliente informado.

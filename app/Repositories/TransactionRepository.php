@@ -7,7 +7,7 @@ use App\Models\Transaction;
 use App\Models\TransactionStatus;
 use Illuminate\Support\Str;
 
-final class TransactionRepository
+class TransactionRepository
 {
     public function create(int $payerId, int $payeeId, float $amount, TransactionStatusEnum $status): Transaction
     {

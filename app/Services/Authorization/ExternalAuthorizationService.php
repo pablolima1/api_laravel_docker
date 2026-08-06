@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class ExternalAuthorizationService
+class ExternalAuthorizationService
 {
     /**
      * Consulta autorização externa e retorna se foi concedida.

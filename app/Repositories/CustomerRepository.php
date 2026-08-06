@@ -6,7 +6,7 @@ use App\Exceptions\Domain\UserNotFoundException;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-final class CustomerRepository
+class CustomerRepository
 {
     /**
      * Retrieves a customer or fails with a domain exception when not found.
