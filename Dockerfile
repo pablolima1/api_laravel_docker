@@ -37,8 +37,6 @@ RUN docker-php-ext-install \
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
-COPY --from=node:lts-alpine /usr/local/ /usr/local/
-
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN addgroup -g $uid $user \

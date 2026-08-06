@@ -13,10 +13,6 @@ git config --global --add safe.directory /var/www/html
 
 echo "Instalando dependências..."
 [ -d vendor ] || (command -v composer >/dev/null && composer install --no-interaction)
-[ -d node_modules ] || (command -v npm >/dev/null && npm install)
-
-echo "Compilando assets..."
-npm run build || echo "⚠️ Falha ao compilar assets (npm run build)"
 
 echo "Rodando migrações..."
 php artisan migrate || echo "⚠️ Migrações falharam"

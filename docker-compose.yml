@@ -11,7 +11,16 @@ services:
             - docker-bridge
         command: ["/bin/sh", "./docker/scripts/entrypoint.sh"]
         depends_on:
-            - redis
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "pgrep", "-f", "php-fpm: master process"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
 
     nginx:
         restart: always
@@ -26,6 +35,25 @@ services:
         networks:
             - docker-bridge
 
+    mysql:
+        restart: always
+        image: mysql:8.0
+        environment:
+            MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+            MYSQL_DATABASE: "${DB_DATABASE}"
+        ports:
+        - "33007:3306"
+        networks:
+            - docker-bridge
+        volumes:
+        - mysql-data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
+
     mysql_testing:
         restart: unless-stopped
         image: mysql:8.0
@@ -36,8 +64,6 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
             MYSQL_DATABASE: "${DB_DATABASE_TESTING:-testing}"
-            MYSQL_USER: "${DB_USERNAME}"
-            MYSQL_PASSWORD: "${DB_PASSWORD}"
         ports:
             - "3324:3306"
         networks:
@@ -105,6 +131,7 @@ services:
             retries: 3
 
 volumes:
+    mysql-data:
     redis_data:
 
 networks:
