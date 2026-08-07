@@ -14,7 +14,7 @@ final class WalletNotFoundException extends BusinessException
         ?Throwable $previous = null,
     ) {
         parent::__construct(
-            message: 'Wallet not found.',
+            message: __('transaction.wallet_not_found'),
             previous: $previous,
         );
     }

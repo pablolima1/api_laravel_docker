@@ -14,7 +14,7 @@ final class UserNotFoundException extends BusinessException
         ?Throwable $previous = null,
     ) {
         parent::__construct(
-            message: 'User not found.',
+            message: __('transaction.user_not_found'),
             previous: $previous,
         );
     }
