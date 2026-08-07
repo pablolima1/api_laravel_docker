@@ -155,7 +155,7 @@ it('retorna 422 quando o payload é inválido', function () {
     ]);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['value', 'payer', 'payee']);
+        ->assertJsonValidationErrors(['value', 'payer', 'payee'], 'error.details');
 });
 
 it('retorna 422 quando payer e payee são o mesmo cliente', function () {
@@ -167,5 +167,5 @@ it('retorna 422 quando payer e payee são o mesmo cliente', function () {
         'payee' => $payer->id,
     ]);
 
-    $response->assertStatus(422)->assertJsonValidationErrors(['payee']);
+    $response->assertStatus(422)->assertJsonValidationErrors(['payee'], 'error.details');
 });
