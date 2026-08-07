@@ -138,6 +138,16 @@ externo. Acompanhar o processamento:
 docker compose logs -f queue
 ```
 
+## Idioma das mensagens de resposta
+ 
+Todas as mensagens de erro (validação e regras de negócio) são resolvidas
+via o sistema de tradução nativo do Laravel (`lang/pt_BR/validation.php` e
+`lang/pt_BR/transaction.php`), não estão hardcoded nas classes. O locale
+padrão é `pt_BR` (`APP_LOCALE` no `.env`). Isso significa que dar suporte a
+outro idioma é uma questão de criar o diretório `lang/{locale}/` equivalente
+e resolver o locale ativo (ex: middleware lendo `Accept-Language`) — nenhuma
+exception ou `FormRequest` precisa ser alterado para isso.
+
 ## Decisões de arquitetura que valem destaque
 
 - **Repositories sem interface**: optei por classes concretas em vez de
