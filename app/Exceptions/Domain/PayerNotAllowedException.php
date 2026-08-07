@@ -12,7 +12,7 @@ final class PayerNotAllowedException extends BusinessException
     public function __construct(?Throwable $previous = null)
     {
         parent::__construct(
-            message: 'Payer is not allowed to send money.',
+            message: __('transaction.unauthorized_user'),
             previous: $previous,
         );
     }

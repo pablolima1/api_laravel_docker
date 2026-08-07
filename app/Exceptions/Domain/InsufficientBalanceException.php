@@ -15,7 +15,7 @@ final class InsufficientBalanceException extends BusinessException
         ?Throwable $previous = null,
     ) {
         parent::__construct(
-            message: 'Insufficient balance.',
+            message: __('transaction.insufficient_balance'),
             previous: $previous,
         );
     }

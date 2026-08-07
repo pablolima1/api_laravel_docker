@@ -12,7 +12,7 @@ final class TransactionNotAuthorizedException extends BusinessException
     public function __construct(?Throwable $previous = null)
     {
         parent::__construct(
-            message: 'Transaction not authorized.',
+            message: __('transaction.unauthorized_external'),
             previous: $previous,
         );
     }
